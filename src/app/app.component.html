@@ -46,19 +46,23 @@
       <div class="card bg-secondary mb-3">
         <h4 class="card-header">Games</h4>
         <div class="card-body">
-          <div class="row">
-            <div class="col-md-6" *ngFor="let game of games">
+          <div class="row letter" *ngFor="let group of groupedGames">
+            <div class="col-md-12">
+              <h2><span class="badge bg-dark">{{ group.letter }}</span></h2>
+            </div>
+            <div class="col-md-6" *ngFor="let game of group.games">
               <div class="card bg-secondary mt-2 mb-3 p-3 border bg-light">
-                <div class="card-body">
+                <div class="card-body game">
                   <div class="row">
-                    <div class="col-4">
+                    <div class="col-md-4">
                       <img
-                        class="cover"
-                        errorImage="{{ coverUrl }}/nocover.png"
-                        lazyLoad="{{ coverUrl }}/{{ game.cover }}.png"
+                        class="cover rounded"
+                        lazyLoad="{{ coverUrl }}/{{
+                          game.cover || 'nocover'
+                        }}.png"
                       />
                     </div>
-                    <div class="col-8 position-relative">
+                    <div class="col-md-8 position-relative">
                       <h6 class="card-title">{{ game.name }}</h6>
                       <span
                         class="badge bg-primary"

@@ -15,16 +15,20 @@ export class AppComponent implements OnInit {
   public coverUrl: string =
     'https://images.igdb.com/igdb/image/upload/t_cover_big';
 
-  public games: Array<Game> = [];
+  public groupedGames: any;
   public categories: Array<any> = [];
 
   constructor(private JSONService: JSONService) {}
 
   ngOnInit() {
     this.JSONService.getJSONData().subscribe((games: Array<Game>) => {
-      this.games = games;
+      this.groupedGames = chain(games)
+        .groupBy((game: Game) => game.name[0].toUpperCase())
+        .map((value: any, key: string) => ({ letter: key, games: value }))
+        .orderBy('letter')
+        .value();
 
-      this.categories = chain(this.games)
+      this.categories = chain(games)
         .map('genres')
         .flatten()
         .uniq()
@@ -32,5 +36,9 @@ export class AppComponent implements OnInit {
         .orderBy()
         .value();
     });
+  }
+
+  objectKeys(obj: any) {
+    return Object.keys(obj);
   }
 }
