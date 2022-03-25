@@ -8,17 +8,33 @@
       {{ title }}
     </a>
 
-    <form class="d-flex">
+    <div class="d-flex">
       <input
+        type="text"
         class="form-control me-2"
         type="search"
         placeholder="Search catalog"
         aria-label="Search"
+        [(ngModel)]="searchText"
+        (ngModelChange)="search()"
       />
-      <button class="btn btn-secondary" type="submit">Find</button>
-    </form>
+    </div>
   </div>
 </nav>
+
+<ng-template #content let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title" ngbAutofocus>{{ selectedGame.name }}</h4>
+    <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <ngb-carousel>
+      <ng-template ngbSlide *ngFor="let screenshot of selectedGame.screenshots">
+        <img src="{{ screenshotUrl }}/{{ screenshot }}.jpg" />
+      </ng-template>
+    </ngb-carousel>
+  </div>
+</ng-template>
 
 <div class="container page-container">
   <div class="row">
@@ -46,30 +62,38 @@
       <div class="card bg-secondary mb-3">
         <h4 class="card-header">Games</h4>
         <div class="card-body">
-          <div class="row letter" *ngFor="let group of groupedGames">
+          <div class="row letter" *ngFor="let group of filteredGames">
             <div class="col-md-12">
-              <h2><span class="badge bg-dark">{{ group.letter }}</span></h2>
+              <h2>
+                <span class="badge bg-dark">{{ group.letter }}</span>
+              </h2>
             </div>
-            <div class="col-md-6" *ngFor="let game of group.games">
-              <div class="card bg-secondary mt-2 mb-3 p-3 border bg-light">
+            <div class="col-lg-12 col-xl-6" *ngFor="let game of group.games">
+              <div class="card bg-secondary mt-2 mb-2 p-3 border bg-light">
                 <div class="card-body game">
                   <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-md-5">
                       <img
-                        class="cover rounded"
-                        lazyLoad="{{ coverUrl }}/{{
+                        class="cover rounded"                        
+                        src="{{ coverUrl }}/{{
                           game.cover || 'nocover'
                         }}.png"
                       />
                     </div>
-                    <div class="col-md-8 position-relative">
-                      <h6 class="card-title">{{ game.name }}</h6>
+                    <div class="col-md-7 position-relative">
+                      <h6 class="card-title mt-2 mt-sm-0">{{ game.name }}</h6>
+                      <div class="tags"></div>
                       <span
                         class="badge bg-primary"
                         *ngFor="let genre of game.genres"
                         >{{ genre }}</span
                       >
-                      <div class="links position-absolute">
+                      <div class="links mt-2 mt-sm-0">
+                        <a (click)="openGallery(content, game)"
+                          ><img
+                            src="/assets/images/gallery-2.png"
+                            *ngIf="game.screenshots"
+                        /></a>
                         <a
                           *ngFor="let website of game.websites"
                           href="{{ website.url }}"
@@ -91,3 +115,4 @@
     </div>
   </div>
 </div>
+<ngx-scrolltop></ngx-scrolltop>
