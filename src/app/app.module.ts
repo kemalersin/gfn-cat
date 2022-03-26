@@ -4,26 +4,34 @@ import { RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule } from '@angular/common/http';
 
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { LazyLoadImageModule, LAZYLOAD_IMAGE_HOOKS, ScrollHooks } from 'ng-lazyload-image';
+import {
+  NgbNavModule,
+  NgbCarouselModule,
+  NgbModalModule,
+} from '@ng-bootstrap/ng-bootstrap';
+import {
+  LazyLoadImageModule,
+  LAZYLOAD_IMAGE_HOOKS,
+  ScrollHooks,
+} from 'ng-lazyload-image';
 import { NgxScrollTopModule } from 'ngx-scrolltop';
 
 import { AppComponent } from './app.component';
 
 @NgModule({
-  declarations: [
-    AppComponent
-  ],
+  declarations: [AppComponent],
   imports: [
     BrowserModule,
     HttpClientModule,
-    NgbModule,
+    NgbNavModule,
+    NgbCarouselModule,
+    NgbModalModule,
     FormsModule,
     RouterModule.forRoot([]),
     LazyLoadImageModule,
-    NgxScrollTopModule
+    NgxScrollTopModule,
   ],
   providers: [{ provide: LAZYLOAD_IMAGE_HOOKS, useClass: ScrollHooks }],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}
