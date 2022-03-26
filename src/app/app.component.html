@@ -8,21 +8,21 @@
       {{ title }}
     </a>
 
-    <div class="d-flex">
+    <div class="d-flex search-bar" *ngIf="!loading">
       <input
         type="text"
-        class="form-control me-2"
+        class="form-control"
         type="search"
         placeholder="Search catalog"
         aria-label="Search"
         [(ngModel)]="searchText"
-        (ngModelChange)="search()"
+        (ngModelChange)="filter()"
       />
     </div>
   </div>
 </nav>
 
-<ng-template #content let-modal>
+<ng-template #modalContent let-modal>
   <div class="modal-header">
     <h4 class="modal-title" ngbAutofocus>{{ selectedGame.name }}</h4>
     <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
@@ -36,8 +36,74 @@
   </div>
 </ng-template>
 
+<ng-template #gameList let-games="games">
+  <div class="card bg-secondary mb-3 game-list">
+    <h4 class="card-header">
+      <span class="float-start">Games</span>
+      <!-- <span class="fs-6 fw-normal float-end">Total games: {{ games.length }}</span> -->
+    </h4>
+    <div class="card-body">
+      <img class="centered no-games" *ngIf="!games.length" src="/assets/images/gamer-cat-big.png" />
+      <div
+        class="row letter"
+        [hidden]="!games.length"
+        *ngFor="let group of games; trackBy: trackByFn"
+      >
+        <div class="col-md-12">
+          <h2>
+            <span class="badge bg-dark">{{ group.letter }}</span>
+          </h2>
+        </div>
+        <div
+          class="col-lg-12 col-xl-6"
+          *ngFor="let game of group.games; trackBy: trackByFn"
+        >
+          <div class="card bg-secondary mt-2 mb-2 p-3 border bg-light">
+            <div class="card-body game">
+              <div class="row">
+                <div class="col-md-5">
+                  <img
+                    class="cover rounded"
+                    src="{{ coverUrl }}/{{ game.cover || 'nocover' }}.png"
+                  />
+                </div>
+                <div class="col-md-7 position-relative">
+                  <h6 class="card-title mt-2 mt-sm-0">{{ game.name }}</h6>
+                  <div class="tags"></div>
+                  <span
+                    class="badge bg-primary"
+                    *ngFor="let genre of game.genres"
+                    >{{ genre }}</span
+                  >
+                  <div class="links mt-2 mt-sm-0">
+                    <a class="gallery" (click)="openGallery(modalContent, game)"
+                      ><img
+                        src="/assets/images/gallery.png"
+                        *ngIf="game.screenshots"
+                    /></a>
+                    <a
+                      *ngFor="let website of game.websites"
+                      href="{{ website.url }}"
+                      target="_blank"
+                      ><img
+                        src="/assets/images/{{
+                          website.category === 13 ? 'steam' : 'epic'
+                        }}-logo.png"
+                    /></a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-template>
+
 <div class="container page-container">
-  <div class="row">
+  <h1 class="centered" *ngIf="loading">LOADING...</h1>
+  <div class="row" *ngIf="!loading">
     <div class="col-lg-4 col-xl-3">
       <div class="card bg-secondary mb-3">
         <h4 class="card-header">Categories</h4>
@@ -50,6 +116,9 @@
               class="form-check-input"
               type="checkbox"
               id="category-{{ i + 1 }}"
+              [value]="category"
+              [checked]="isChecked(category)"
+              (change)="selectCategory($event)"
             />
             <label class="form-check-label" for="category-{{ i + 1 }}">
               {{ category }}
@@ -59,58 +128,17 @@
       </div>
     </div>
     <div class="col-lg-8 col-xl-9">
-      <div class="card bg-secondary mb-3">
-        <h4 class="card-header">Games</h4>
-        <div class="card-body">
-          <div class="row letter" *ngFor="let group of filteredGames">
-            <div class="col-md-12">
-              <h2>
-                <span class="badge bg-dark">{{ group.letter }}</span>
-              </h2>
-            </div>
-            <div class="col-lg-12 col-xl-6" *ngFor="let game of group.games">
-              <div class="card bg-secondary mt-2 mb-2 p-3 border bg-light">
-                <div class="card-body game">
-                  <div class="row">
-                    <div class="col-md-5">
-                      <img
-                        class="cover rounded"                        
-                        src="{{ coverUrl }}/{{
-                          game.cover || 'nocover'
-                        }}.png"
-                      />
-                    </div>
-                    <div class="col-md-7 position-relative">
-                      <h6 class="card-title mt-2 mt-sm-0">{{ game.name }}</h6>
-                      <div class="tags"></div>
-                      <span
-                        class="badge bg-primary"
-                        *ngFor="let genre of game.genres"
-                        >{{ genre }}</span
-                      >
-                      <div class="links mt-2 mt-sm-0">
-                        <a (click)="openGallery(content, game)"
-                          ><img
-                            src="/assets/images/gallery-2.png"
-                            *ngIf="game.screenshots"
-                        /></a>
-                        <a
-                          *ngFor="let website of game.websites"
-                          href="{{ website.url }}"
-                          target="_blank"
-                          ><img
-                            src="/assets/images/{{
-                              website.category === 13 ? 'steam' : 'epic'
-                            }}-logo.png"
-                        /></a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div [hidden]="hasFiltered">
+        <ng-template
+          [ngTemplateOutlet]="gameList"
+          [ngTemplateOutletContext]="{ games: groupedGames }"
+        ></ng-template>
+      </div>
+      <div [hidden]="!hasFiltered">
+        <ng-template
+          [ngTemplateOutlet]="gameList"
+          [ngTemplateOutletContext]="{ games: filteredGames }"
+        ></ng-template>
       </div>
     </div>
   </div>

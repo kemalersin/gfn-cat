@@ -1,16 +1,25 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
+import { Subject } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs/operators';
+
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+
+import { eachSeries } from 'async';
 
 import {
   assignIn,
   chain,
-  cloneDeep,
+  difference,
   find,
-  forEach,
+  has,
   includes,
   isNil,
-  lowerCase,
+  join,
+  map,
+  some,
+  split,
+  without,
 } from 'lodash';
 
 import { Game } from './interfaces/game.interface';
@@ -29,13 +38,28 @@ export class AppComponent implements OnInit {
   public coverUrl: string = `${this.baseUrl}/t_cover_big`;
   public screenshotUrl: string = `${this.baseUrl}/t_original`;
 
-  public groupedGames: any;
-  public filteredGames: any;
+  public groupedGames: Array<any> = [];
+  public filteredGames: Array<any> = [];
   public categories: Array<any> = [];
+  public checkedCategories: Array<any> = [];
 
   public selectedGame: Game;
 
   public searchText: string = '';
+
+  public loading: boolean = false;
+  public filtering: boolean = false;
+  public hasNoResult: boolean = true;
+
+  destroy$: Subject<boolean> = new Subject<boolean>();
+
+  public get isCategoriesChecked(): boolean {
+    return some(this.checkedCategories);
+  }
+
+  public get hasFiltered(): boolean {
+    return this.filtering || this.hasNoResult || some(this.filteredGames);
+  }
 
   constructor(
     private route: ActivatedRoute,
@@ -44,74 +68,158 @@ export class AppComponent implements OnInit {
     private JSONService: JSONService
   ) {}
 
-  ngOnInit() {
-    this.JSONService.getJSONData().subscribe((games: Array<Game>) => {
-      this.groupedGames = chain(games)
-        .groupBy((game: Game) => game.name[0].toUpperCase())
-        .map((value: any, key: string) => ({ letter: key, games: value }))
-        .orderBy('letter')
-        .value();
+  public ngOnInit() {
+    this.loading = true;
 
-      this.categories = chain(games)
-        .map('genres')
-        .flatten()
-        .uniq()
-        .omitBy(isNil)
-        .orderBy()
-        .value();
+    this.JSONService.getJSONData()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.loading = false))
+      )
+      .subscribe((games: Array<Game>) => {
+        this.groupedGames = chain(games)
+          .groupBy((game: Game) => game.name[0].toUpperCase())
+          .map((value: any, key: string) => ({ letter: key, games: value }))
+          .orderBy('letter')
+          .value();
 
-      this.resetFilteredGames();
-    });
+        this.categories = chain(games)
+          .map('genres')
+          .flatten()
+          .uniq()
+          .omitBy(isNil)
+          .orderBy()
+          .value();
+
+        this.route.queryParams
+          .pipe(takeUntil(this.destroy$))
+          .subscribe((params: any) => {
+            if (params.s || params.c) {
+              this.searchText = params.s;
+
+              if (params.c) {
+                this.checkedCategories = split(params.c, ',');
+              }
+
+              this.filter();
+
+              return;
+            }
+
+            this.resetFilteredGames();
+          });
+      });
   }
 
-  public resetFilteredGames() {
-    this.filteredGames = cloneDeep(this.groupedGames);
+  public ngOnDestroy() {
+    this.destroy$.next(true);
+    this.destroy$.unsubscribe();
   }
 
-  public navigate() {
+  public trackByFn(index: any, item: any) {
+    return index;
+  }
+
+  public isChecked(category: string) {
+    return includes(this.checkedCategories, this.formatText(category));
+  }
+
+  private formatText(text: string) {
+    return chain(text).deburr().kebabCase().value();
+  }
+
+  private resetFilteredGames() {
+    this.filteredGames = [];
+
+    this.filtering = false;
+    this.hasNoResult = false;
+  }
+
+  private navigate() {
     let queryParams: any = {};
 
     if (this.searchText) {
-      queryParams.s = this.searchText;
+      queryParams.s = this.formatText(this.searchText);
+    }
+
+    if (this.isCategoriesChecked) {
+      queryParams.c = join(this.checkedCategories);
     }
 
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams
+      queryParams,
     });
-  }  
+  }
 
-  public search() {
+  public selectCategory(event: any) {
+    const category: string = this.formatText(event.target.value);
+
+    event.target.checked
+      ? this.checkedCategories.push(category)
+      : (this.checkedCategories = without(this.checkedCategories, category));
+
+    this.filter();
+  }
+
+  public filter(fromCategorySelect?: boolean) {
+    this.navigate();
+
     setTimeout(() => {
-      if (!this.searchText) {
-        this.navigate();
-        this.resetFilteredGames();
+      this.resetFilteredGames();
 
+      if (!(this.isCategoriesChecked || this.searchText)) {
         return;
       }
 
-      this.filteredGames = [];
+      this.filtering = true;
 
-      forEach(this.groupedGames, (group: any) =>
-        forEach(group.games, (game: Game) => {
-          if (includes(lowerCase(game.name), lowerCase(this.searchText))) {
-            const currentGroup: any = { letter: group.letter };
+      eachSeries(
+        this.groupedGames,
+        (group: any, cbGroup) => {
+          eachSeries(group.games, (game: Game, cbGame) => {
+            const gameName: string = this.formatText(game.name);
+            const searchText: string = this.formatText(this.searchText);
 
-            const getGroup: Function = () =>
-              find(this.filteredGames, currentGroup);
+            if (includes(gameName, searchText)) {
+              const currentGroup: any = { letter: group.letter };
 
-            if (!getGroup()) {
-              assignIn(currentGroup, { games: [] });
-              this.filteredGames.push(currentGroup);
+              const getGroup: Function = () =>
+                find(this.filteredGames, currentGroup);
+
+              if (this.isCategoriesChecked) {
+                let gameCategories: Array<string> = map(
+                  game.genres,
+                  (genre: string) => this.formatText(genre)
+                );
+
+                if (
+                  difference(this.checkedCategories, gameCategories).length !==
+                  0
+                ) {
+                  return cbGame();
+                }
+              }
+
+              if (!getGroup()) {
+                assignIn(currentGroup, { games: [] });
+                this.filteredGames.push(currentGroup);
+              }
+
+              getGroup().games.push(game);
             }
 
-            getGroup().games.push(game);
-          }
-        })
-      );
+            cbGame();
+          });
 
-      this.navigate();
-    });
+          cbGroup();
+        },
+        () => {
+          this.filtering = false;
+          this.hasNoResult = true;
+        }
+      );
+    }, 250);
   }
 
   public openGallery(content: any, game: Game) {
