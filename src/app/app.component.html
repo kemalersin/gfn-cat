@@ -2,7 +2,7 @@
   <div class="container">
     <a class="navbar-brand text-truncate">
       <img
-        src="/assets/images/gamer-cat-brand.png"
+        src="assets/images/gamer-cat-brand.png"
         class="brand-image d-inline-block"
       />
       {{ title }}
@@ -43,7 +43,7 @@
       <!-- <span class="fs-6 fw-normal float-end">Total games: {{ games.length }}</span> -->
     </h4>
     <div class="card-body">
-      <img class="centered no-games" *ngIf="!games.length" src="/assets/images/gamer-cat-big.png" />
+      <img class="centered no-games" *ngIf="!games.length" src="assets/images/gamer-cat-big.png" />
       <div
         class="row letter"
         [hidden]="!games.length"
@@ -78,7 +78,7 @@
                   <div class="links mt-2 mt-sm-0">
                     <a class="gallery" (click)="openGallery(modalContent, game)"
                       ><img
-                        src="/assets/images/gallery.png"
+                        src="assets/images/gallery.png"
                         *ngIf="game.screenshots"
                     /></a>
                     <a
@@ -86,7 +86,7 @@
                       href="{{ website.url }}"
                       target="_blank"
                       ><img
-                        src="/assets/images/{{
+                        src="assets/images/{{
                           website.category === 13 ? 'steam' : 'epic'
                         }}-logo.png"
                     /></a>

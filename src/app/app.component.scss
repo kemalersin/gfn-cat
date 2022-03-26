@@ -2,7 +2,8 @@
   padding: 0;
 
   .brand-image {
-    height: 75px;
+    height: 62px;
+    margin: 7px 0 6px 0;
   }
 
   .search-bar {
@@ -21,7 +22,7 @@
 
   .card {
     &.game-list {
-      min-height: calc(100vh - 142px);
+      min-height: calc(100vh - 140px);
     }
 
     .card-body {
