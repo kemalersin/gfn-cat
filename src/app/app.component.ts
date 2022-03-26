@@ -193,8 +193,10 @@ export class AppComponent implements OnInit {
                 );
 
                 if (
-                  difference(this.checkedCategories, gameCategories).length !==
-                  0
+                  chain(this.checkedCategories)
+                    .difference(gameCategories)
+                    .some()
+                    .value()
                 ) {
                   return cbGame();
                 }
