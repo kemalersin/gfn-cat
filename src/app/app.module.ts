@@ -9,11 +9,13 @@ import {
   NgbCarouselModule,
   NgbModalModule,
 } from '@ng-bootstrap/ng-bootstrap';
+
 import {
   LazyLoadImageModule,
   LAZYLOAD_IMAGE_HOOKS,
   ScrollHooks,
 } from 'ng-lazyload-image';
+
 import { NgxScrollTopModule } from 'ngx-scrolltop';
 
 import { AppComponent } from './app.component';
@@ -29,7 +31,7 @@ import { AppComponent } from './app.component';
     FormsModule,
     RouterModule.forRoot([]),
     LazyLoadImageModule,
-    NgxScrollTopModule,
+    NgxScrollTopModule
   ],
   providers: [{ provide: LAZYLOAD_IMAGE_HOOKS, useClass: ScrollHooks }],
   bootstrap: [AppComponent],
