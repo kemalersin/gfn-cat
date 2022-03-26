@@ -1,3 +1,4 @@
 export const environment = {
-  production: true
+  production: true,
+  gaTrackingCode: "G-KEBCT02B5C"
 };

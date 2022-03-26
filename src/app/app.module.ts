@@ -4,6 +4,8 @@ import { RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule } from '@angular/common/http';
 
+import { NgxGoogleAnalyticsModule } from 'ngx-google-analytics';
+
 import {
   NgbNavModule,
   NgbCarouselModule,
@@ -19,6 +21,7 @@ import {
 import { NgxScrollTopModule } from 'ngx-scrolltop';
 
 import { AppComponent } from './app.component';
+import { environment } from '../environments/environment';
 
 @NgModule({
   declarations: [AppComponent],
@@ -31,7 +34,8 @@ import { AppComponent } from './app.component';
     FormsModule,
     RouterModule.forRoot([]),
     LazyLoadImageModule,
-    NgxScrollTopModule
+    NgxScrollTopModule,
+    NgxGoogleAnalyticsModule.forRoot(environment.gaTrackingCode),
   ],
   providers: [{ provide: LAZYLOAD_IMAGE_HOOKS, useClass: ScrollHooks }],
   bootstrap: [AppComponent],
