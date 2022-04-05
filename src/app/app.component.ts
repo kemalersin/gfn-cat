@@ -15,6 +15,7 @@ import {
   includes,
   isNil,
   join,
+  lowerCase,
   map,
   some,
   split,
@@ -188,7 +189,10 @@ export class AppComponent implements OnInit {
         this.groupedGames,
         (group: any, cbGroup) => {
           eachSeries(group.games, (game: Game, cbGame) => {
-            if (includes(game.name, this.searchText)) {
+            const gameName: string = this.formatText(game.name);
+            const searchText: string = this.formatText(this.searchText);
+
+            if (includes(gameName, searchText)) {
               const currentGroup: any = { letter: group.letter };
 
               const getGroup: Function = () =>
