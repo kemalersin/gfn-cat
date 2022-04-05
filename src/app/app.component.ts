@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
@@ -58,6 +58,17 @@ export class AppComponent implements OnInit {
 
   public get hasFiltered(): boolean {
     return this.filtering || this.hasNoResult || some(this.filteredGames);
+  }
+
+  @HostListener("window:scroll", [])
+  onScroll(): void {
+    if (this.bottomReached()) {
+      alert("")
+    }
+  }
+
+  bottomReached(): boolean {
+    return (window.innerHeight + window.scrollY) >= document.body.offsetHeight;
   }
 
   constructor(
@@ -138,7 +149,7 @@ export class AppComponent implements OnInit {
     let queryParams: any = {};
 
     if (this.searchText) {
-      queryParams.s = this.formatText(this.searchText);
+      queryParams.s = this.searchText;
     }
 
     if (this.isCategoriesChecked) {
@@ -177,10 +188,7 @@ export class AppComponent implements OnInit {
         this.groupedGames,
         (group: any, cbGroup) => {
           eachSeries(group.games, (game: Game, cbGame) => {
-            const gameName: string = this.formatText(game.name);
-            const searchText: string = this.formatText(this.searchText);
-
-            if (includes(gameName, searchText)) {
+            if (includes(game.name, this.searchText)) {
               const currentGroup: any = { letter: group.letter };
 
               const getGroup: Function = () =>
